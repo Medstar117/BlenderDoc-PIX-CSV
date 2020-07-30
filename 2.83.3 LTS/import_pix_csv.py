@@ -28,10 +28,10 @@ from bpy.props import BoolProperty, FloatProperty, StringProperty, EnumProperty
 bl_info = {
     "name": "BlenderDoc PIX CSV",
     "author": "Medstar, Stanislav Bobovych",
-    "version": (1, 0, 0),
+    "version": (1, 0, 1),
     "blender": (2, 80, 0),
     "location": "File > Import-Export",
-    "description": "Import PIX CSV data from RenderDoc. Imports meshes.",
+    "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals.",
     "category": "Import"}
 
 class PIX_CSV_Operator(bpy.types.Operator):
@@ -81,13 +81,11 @@ class PIX_CSV_Operator(bpy.types.Operator):
     
     def execute(self, context):
         keywords = self.as_keywords(ignore = ("axis_forward", "axis_up", "filter_glob"))
-        
-        global_matrix = axis_conversion(from_forward = self.axis_forward, from_up = self.axis_up).to_4x4()
-                                  
+        global_matrix = axis_conversion(from_forward = self.axis_forward, from_up = self.axis_up).to_4x4()                       
+
         keywords["global_matrix"] = global_matrix
-        
-        print(keywords)
         importCSV(**keywords)
+
         return {"FINISHED"}
     
     def invoke(self, context, event):
@@ -114,10 +112,10 @@ def make_mesh(vertices, faces, normals, uvs, global_matrix):
     mesh.from_pydata(vertices, [], faces)
 
     # Generate normals
-    #index = 0
-    #for vertex in mesh.vertices:
-    #    vertex.normal = normals[index]
-    #    index += 1
+    index = 0
+    for vertex in mesh.vertices:
+        vertex.normal = normals[index]
+        index += 1
 
     # Generate UV data
     #uvtex = mesh.tessface_uv_textures.new()
@@ -144,12 +142,12 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
     
     # Dictionaries
     vertex_dict = {}
-    #normal_dict = {}
+    normal_dict = {}
     
     # Lists
     vertices = []
     faces = []
-    #normals = []
+    normals = []
     #uvs = []
     
     with open(filepath) as f:
@@ -179,9 +177,15 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
             # X, Y, Z coordinates of vertices
             vertex_dict[vertex_index] = (x_mod * float(row[header_dict["a_Position0.x"]]),
                                                  float(row[header_dict["a_Position0.y"]]),
-                                                 float(row[header_dict["a_Position0.z"]]))
+                                                 float(row[header_dict["a_Position0.z"]]),
+                                         )
+            
             # TODO: How are axises really ligned up?
-            #normal_dict[vertex_index] = (float(row[6]), float(row[7]), float(row[8]))
+            normal_dict[vertex_index] = (float(row[header_dict["a_Normal0.x"]]), 
+                                         float(row[header_dict["a_Normal0.y"]]),
+                                         float(row[header_dict["a_Normal0.z"]]),
+                                         )
+            
             # TODO: Add support for changing the origin of UV coords
             #uv = (foat(row[9]), 1.0 - float(row[10])) # Modify V
             
@@ -209,19 +213,17 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
                 pass
             else:
                 vertex_dict[i] = (0, 0, 0)
-                #normal_dict[i] = (0, 0, 0)
+                normal_dict[i] = (0, 0, 0)
                 
         # Dictionary sorted by key
         vertex_dict = OrderedDict(sorted(vertex_dict.items(), key = lambda t: t[0]))
-        #normal_dict = OrderedDict(sorted(normal_dict.items(), key=lambda t: t[0]))
+        normal_dict = OrderedDict(sorted(normal_dict.items(), key = lambda t: t[0]))
         
-        for key in vertex_dict:
-            vertices.append(list(vertex_dict[key]))
-        #for key in normal_dict:
-        #    normals.append(list(normal_dict[key]))
+        for key in vertex_dict: vertices.append(list(vertex_dict[key]))
+        for key in normal_dict: normals.append(list(normal_dict[key]))
         
         #make_mesh(vertices, faces, normals, uvs, global_matrix)
-        make_mesh(vertices, faces, None, None, global_matrix)
+        make_mesh(vertices, faces, normals, None, global_matrix)
 
 def menu_func_import(self, context):
     self.layout.operator(PIX_CSV_Operator.bl_idname, text="RenderDoc PIX CSV (.csv)")
@@ -238,5 +240,5 @@ def unregister():
 
 
 if __name__ == "__main__":
-    #register() # Uncomment this line to run from Blender's in-app scripting section
-    bpy.ops.object.pix_csv_importer('INVOKE_DEFAULT') # Uncomment this line to run the script as a plugin
+    #register()
+    bpy.ops.object.pix_csv_importer('INVOKE_DEFAULT')

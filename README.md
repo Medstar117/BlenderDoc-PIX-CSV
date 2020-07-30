@@ -14,8 +14,8 @@ The original script was made for Blender 2.7.8. The goal is to port this plugin 
 
 - [X] Get the plugin to work with Blender 2.83.3 LTS (meshes only)
 - [ ] Clean up script of leftover/debuging data
-- [ ] Configure script to be more dynamic in data retrieval (i.e. don't make the script assume that a specific column will have a certain piece of data every time)
-- [ ] Fix normals importing
+- [X] Configure script to be more dynamic in data retrieval (i.e. don't make the script assume that a specific column will have a certain piece of data every time)
+- [X] Fix normals importing
 - [ ] Fix UV importing
 - [ ] Add bone importing
 - [ ] Add Tangent importing
