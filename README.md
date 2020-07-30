@@ -12,7 +12,7 @@ My fork of the original repository: https://github.com/Medstar117/GameTools
 ## Details to note
 The original script was made for Blender 2.7.8. The goal is to port this plugin to work with Blender 2.83.3. The following checklist details the goals of this project:
 
-- [ ] Get the plugin to work with Blender 2.83.3 LTS (meshes only)
+- [X] Get the plugin to work with Blender 2.83.3 LTS (meshes only)
 - [ ] Clean up script of leftover/debuging data
 - [ ] Configure script to be more dynamic in data retrieval (i.e. don't make the script assume that a specific column will have a certain piece of data every time)
 - [ ] Fix normals importing
@@ -31,8 +31,18 @@ The original script was made for Blender 2.7.8. The goal is to port this plugin 
 3. Select User Preferences
 4. Select the "Add-ons" tab in the new window that pops up
 5. Select the "Install from File..." button at the bottom of the window
-6. Navigate to where the install_pix_csv.py file is located
+6. Navigate to where the "import_pix.py" file is located
 7. Double click the script or press the "Install from File..." button at the top right of the window
 8. Select the "Community" button under "Supported Level" and the "User" button to display the plugin
 9. Ensure that the checkbox for the plugin is set to be enabled/ has a checkmark in it
 10. The option to import PIX CSV files should now be under the "File > Import" menu
+
+### For the new 2.80.0/ 2.83.3 LTS script:
+1. Open Blender
+2. Select the "Edit" tab at the top left of the window
+3. Select "Preferences..."
+4. Press the "Install..." button at the top right of the window
+5. Navigate to where the "import_pix_csv.py" file is located
+6. Double click the script or press the "Install Add-on..." button at the bottom right of the window
+7. Ensure that the checkbox for the plugin is set to be enabled/ has a checkmark in it
+8. The option to import PIX CSV files should now be under the "File > Import" menu
