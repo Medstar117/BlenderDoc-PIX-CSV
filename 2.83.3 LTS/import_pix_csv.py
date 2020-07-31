@@ -28,10 +28,10 @@ from bpy.props import BoolProperty, FloatProperty, StringProperty, EnumProperty
 bl_info = {
     "name": "BlenderDoc PIX CSV",
     "author": "Medstar, Stanislav Bobovych",
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "blender": (2, 80, 0),
     "location": "File > Import-Export",
-    "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals.",
+    "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals, UV's.",
     "category": "Import"}
 
 class PIX_CSV_Operator(bpy.types.Operator):
@@ -46,13 +46,13 @@ class PIX_CSV_Operator(bpy.types.Operator):
     mirror_x = bpy.props.BoolProperty(
                                       name = "Mirror X",
                                       description = "Mirror all the vertices across X axis",
-                                      default = True,
+                                      default = False,
                                       )
            
     vertex_order = bpy.props.BoolProperty(
                                           name = "Change vertex order",
                                           description = "Reorder vertices in counter-clockwise order",
-                                          default = True,
+                                          default = False,
                                           )
     # Filter keywords
     axis_forward = EnumProperty(
@@ -118,14 +118,10 @@ def make_mesh(vertices, faces, normals, uvs, global_matrix):
         index += 1
 
     # Generate UV data
-    #uvtex = mesh.tessface_uv_textures.new()
-    #uvtex.name = "Extracted UV Map"
-
-    #for face, uv in enumerate(uvs):
-    #    data = uvtex.data[face]
-    #    data.uv1 = uv[0]
-    #    data.uv2 = uv[1]
-    #    data.uv3 = uv[2]
+    uv_layer = mesh.uv_layers.new(name = "UVMap")
+    for i, uv in enumerate(uv_layer.data): uv.uv = uvs[i]
+            
+    mesh.update(calc_edges=False)
     
     obj = bpy.data.objects.new("Imported Mesh", mesh) # Create the new mesh and give it a name
     obj.matrix_world = global_matrix # Apply transformation matrix
@@ -148,7 +144,7 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
     vertices = []
     faces = []
     normals = []
-    #uvs = []
+    uvs = []
     
     with open(filepath) as f:
         
@@ -168,7 +164,6 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
         
         i = 0
         current_face = []
-        #current_uv = []
         
         for row in reader: # TODO: Make dynamic searching for different vertex sections
             
@@ -187,24 +182,23 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
                                          )
             
             # TODO: Add support for changing the origin of UV coords
-            #uv = (foat(row[9]), 1.0 - float(row[10])) # Modify V
+            uv = (float(row[header_dict["a_TexCoord0.x"]]), float(row[header_dict["a_TexCoord0.y"]]))
             
             if i < 2:
                 current_face.append(vertex_index)
-                #current_uv.append(uv)
+                uvs.append(uv)
                 i += 1
             else:
                 current_face.append(vertex_index)
                 # TODO: add option to change order of marching vertices
-                if vertex_order:
-                    faces.append((current_face[2], current_face[1], current_face[0]))
-                else:
-                    faces.append(current_face)
-                
-                #current_uv.append(uv)
-                #uvs.append(current_uv)
+                if vertex_order: faces.append((current_face[2], current_face[1], current_face[0]))
+                else: faces.append(current_face)
+
+                # Append UV data to lists and dictionaries
+                uvs.append(uv)
+
+                # Clear "current_face" list and "i" variable for next loop
                 current_face = []
-                #current_uv = []
                 i = 0
                 
         # Zero out any missing vertices
@@ -222,8 +216,7 @@ def importCSV(filepath=None, mirror_x=False, vertex_order=True, global_matrix=No
         for key in vertex_dict: vertices.append(list(vertex_dict[key]))
         for key in normal_dict: normals.append(list(normal_dict[key]))
         
-        #make_mesh(vertices, faces, normals, uvs, global_matrix)
-        make_mesh(vertices, faces, normals, None, global_matrix)
+        make_mesh(vertices, faces, normals, uvs, global_matrix)
 
 def menu_func_import(self, context):
     self.layout.operator(PIX_CSV_Operator.bl_idname, text="RenderDoc PIX CSV (.csv)")

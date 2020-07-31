@@ -13,10 +13,10 @@ My fork of the original repository: https://github.com/Medstar117/GameTools
 The original script was made for Blender 2.7.8. The goal is to port this plugin to work with Blender 2.83.3. The following checklist details the goals of this project:
 
 - [X] Get the plugin to work with Blender 2.83.3 LTS (meshes only)
-- [ ] Clean up script of leftover/debuging data
+- [X] Clean up script of leftover/debuging data
 - [X] Configure script to be more dynamic in data retrieval (i.e. don't make the script assume that a specific column will have a certain piece of data every time)
 - [X] Fix normals importing
-- [ ] Fix UV importing
+- [X] Fix UV importing
 - [ ] Add bone importing
 - [ ] Add Tangent importing
 - [ ] Add Binormal importing
