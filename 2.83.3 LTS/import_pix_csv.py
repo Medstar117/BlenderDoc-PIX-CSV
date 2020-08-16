@@ -26,13 +26,14 @@ from bpy_extras.io_utils import axis_conversion
 from bpy.props import BoolProperty, StringProperty, EnumProperty
 
 bl_info = {
-    "name": "BlenderDoc PIX CSV",
-    "author": "Medstar, Stanislav Bobovych",
-    "version": (1, 0, 2),
-    "blender": (2, 80, 0),
-    "location": "File > Import-Export",
-    "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals, UV's.",
-    "category": "Import"}
+           "name": "BlenderDoc PIX CSV",
+           "author": "Medstar, Stanislav Bobovych",
+           "version": (1, 0, 2),
+           "blender": (2, 80, 0),
+           "location": "File > Import-Export",
+           "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals, UV's.",
+           "category": "Import",
+           }
 
 class PIX_CSV_Operator(bpy.types.Operator):
 
@@ -234,7 +235,7 @@ def importCSV(filepath = None, mirror_x = False, vertex_order = True, global_mat
 classes = (PIX_CSV_Operator,)
 
 def menu_func_import(self, context):
-    self.layout.operator(PIX_CSV_Operator.bl_idname, text="RenderDoc PIX CSV (.csv)")
+    self.layout.operator(PIX_CSV_Operator.bl_idname, text = "RenderDoc PIX CSV (.csv)")
 
 def register():
     for cls in classes: bpy.utils.register_class(cls)
