@@ -28,7 +28,7 @@ from bpy.props import BoolProperty, StringProperty, EnumProperty
 bl_info = {
            "name": "BlenderDoc PIX CSV",
            "author": "Medstar, Stanislav Bobovych",
-           "version": (1, 0, 2),
+           "version": (1, 0, 3),
            "blender": (2, 80, 0),
            "location": "File > Import-Export",
            "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals, UV's.",
@@ -44,6 +44,12 @@ class PIX_CSV_Operator(bpy.types.Operator):
     filter_glob = StringProperty(default = "*.csv", options = {"HIDDEN"})
 
     # Options for generation of vertices
+    assume_DirectX_PIX_layout = BoolProperty(
+                                             name = "Assume DirectX PIX Layout",
+                                             description = "Assume that the layout of a given CSV is from DirectX PIX instead of RenderDoc. Acts like original script.",
+                                             default = False,
+                                             )
+
     mirror_x = BoolProperty(
                             name = "Mirror X",
                             description = "Mirror all the vertices across X axis",
@@ -104,6 +110,8 @@ class PIX_CSV_Operator(bpy.types.Operator):
         col.label(text = "Import Options")
 
         row = col.row()
+        row.prop(self, "assume_DirectX_PIX_layout")
+        row = col.row()
         row.prop(self, "mirror_x")
         row = col.row()
         row.prop(self, "vertex_order")
@@ -135,7 +143,7 @@ def make_mesh(vertices, faces, normals, uvs, global_matrix):
     bpy.context.collection.objects.link(obj)             # Link object to scene
 
 
-def importCSV(filepath = None, mirror_x = False, vertex_order = True, global_matrix = None):
+def importCSV(filepath = None, assume_DirectX_PIX_layout = False, mirror_x = False, vertex_order = True, global_matrix = None):
 
     # Translates coordinates of things to the global space by ensuring that there's a global matrix to use
     if global_matrix is None: global_matrix = mathutils.Matrix()
@@ -160,10 +168,34 @@ def importCSV(filepath = None, mirror_x = False, vertex_order = True, global_mat
         csv_header = next(reader)           # Get the header of the CSV file
         header_dict = {"VTX": 0, "IDX": 1}  # These two values will always appear at these positions in a row list
 
-        # Dynamically assign which column index is for what component; also strips any spaces in the header
-        for index in range(2, len(csv_header)):
-            header = csv_header[index].split(" ")
-            header_dict.update({header[1]: index})
+        if not assume_DirectX_PIX_layout:
+            # Dynamically assign which column index is for what component; also strips any spaces in the header
+            for index in range(2, len(csv_header)):
+                header = csv_header[index].split(" ")
+                header_dict.update({header[1]: index})
+
+            vertex_x = header_dict["a_Position0.x"]
+            vertex_y = header_dict["a_Position0.y"]
+            vertex_z = header_dict["a_Position0.z"]
+
+            normal_x = header_dict["a_Normal0.x"]
+            normal_y = header_dict["a_Normal0.y"]
+            normal_z = header_dict["a_Normal0.z"]
+
+            tex_coord_x = header_dict["a_TexCoord0.x"]
+            tex_coord_y = header_dict["a_TexCoord0.y"]
+
+        else:
+            vertex_x = 2
+            vertex_y = 3
+            vertex_z = 4
+
+            normal_x = 6
+            normal_y = 7
+            normal_z = 8
+
+            tex_coord_x = 9
+            tex_coord_y = 10
 
         # Check if user wants vertices to be mirrored on the X-axis
         if mirror_x: x_mod = -1
@@ -178,22 +210,22 @@ def importCSV(filepath = None, mirror_x = False, vertex_order = True, global_mat
 
             # X, Y, Z coordinates of vertices
             vertex_dict[vertex_index] = (
-                                         x_mod * float(row[header_dict["a_Position0.x"]]),
-                                                 float(row[header_dict["a_Position0.y"]]),
-                                                 float(row[header_dict["a_Position0.z"]]),
+                                         x_mod * float(row[vertex_x]),
+                                                 float(row[vertex_y]),
+                                                 float(row[vertex_z]),
                                          )
 
             # TODO: How are axises really ligned up?
             normal_dict[vertex_index] = (
-                                         float(row[header_dict["a_Normal0.x"]]),
-                                         float(row[header_dict["a_Normal0.y"]]),
-                                         float(row[header_dict["a_Normal0.z"]]),
+                                         float(row[normal_x]),
+                                         float(row[normal_y]),
+                                         float(row[normal_z]),
                                          )
 
             # TODO: Add support for changing the origin of UV coords
             uv = (
-                  float(row[header_dict["a_TexCoord0.x"]]),
-                  float(row[header_dict["a_TexCoord0.y"]]),
+                  float(row[tex_coord_x]),
+                  float(row[tex_coord_y]),
                   )
 
             if i < 2:
