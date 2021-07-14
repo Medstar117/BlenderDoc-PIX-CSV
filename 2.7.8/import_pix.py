@@ -28,7 +28,7 @@ from bpy_extras.io_utils import unpack_list, unpack_face_list, axis_conversion
 bl_info = {
            "name": "BlenderDoc PIX CSV",
            "author": "Medstar, Stanislav Bobovych",
-           "version": (1, 0, 1),
+           "version": (1, 0, 2),
            "blender": (2, 7, 8),
            "location": "File > Import-Export",
            "description": "Import PIX CSV data from RenderDoc. Imports meshes, normals, UV's.",
@@ -136,12 +136,32 @@ def make_mesh(verteces, faces, normals, uvs, global_matrix):
         data.uv2 = uv[1]
         data.uv3 = uv[2]
 
+    # Update the mesh and link it to the scene
     mesh.update(calc_tessface = False, calc_edges = False)
-
     obj = bpy.data.objects.new("Imported Mesh", mesh)    # Create the mesh object for the imported mesh
     obj.matrix_world = global_matrix                     # Apply transformation matrix
     bpy.context.scene.objects.link(obj)                  # Link object to scene
 
+    # Prep for mesh cleaning --> https://blender.stackexchange.com/questions/174525/how-to-merge-all-vertices-by-distance-and-remove-all-inner-faces
+    merge_threshold = 0.0001
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select = True # Select the object we just made
+    bpy.context.scene.objects.active = obj
+    bpy.ops.object.mode_set(mode = "EDIT")
+
+    # Combine tri's to make a solid mesh and to remove unnecessary vertices
+    bpy.ops.mesh.select_all(action = "SELECT")
+    bpy.ops.mesh.remove_doubles(threshold = merge_threshold)
+    bpy.ops.mesh.select_all(action = "DESELECT")
+
+    # Remove interior faces that won't be seen
+    bpy.ops.mesh.select_mode(type = "FACE")
+    bpy.ops.mesh.select_interior_faces()
+    bpy.ops.mesh.delete(type = "FACE")
+
+    # Restore the scene to object mode
+    if bpy.context.mode != "OBJECT":
+        bpy.ops.object.mode_set(mode = "OBJECT")
 
 def importCSV(filepath = None, mirror_x = False, vertex_order = True, global_matrix = None):
 
